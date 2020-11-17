@@ -10,8 +10,6 @@ import (
 	"github.com/h2non/bimg"
 )
 
-const Quality = 80
-
 func init() {
 	log.Println("RegisterPlugin")
 	caddy.RegisterPlugin("webp", caddy.Plugin{
