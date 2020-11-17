@@ -4,15 +4,10 @@ import (
 	"bytes"
 	"github.com/caddyserver/caddy"
 	"github.com/caddyserver/caddy/caddyhttp/httpserver"
-	"github.com/chai2010/webp"
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/image/bmp"
-	"image"
-	"image/jpeg"
-	"image/png"
-	"io"
 	"net/http"
 	"strings"
+	"github.com/h2non/bimg"
 )
 
 const Quality = 80
@@ -43,46 +38,25 @@ type handler struct {
 }
 
 func (s handler) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
-	ua := r.Header.Get("User-Agent")
-	if strings.Contains(ua, "Safari") && !strings.Contains(ua, "Chrome") && !strings.Contains(ua, "Firefox") {
-		return s.next.ServeHTTP(w, r) // 对Safari禁用webp
+	accept := r.Header.Get("Accept")
+	if !(strings.Contains(accept, "image/webp") || strings.Contains(accept, "*/*")) {
+		return s.next.ServeHTTP(w, r)
 	}
 	resp := &response{}
 	i, err := s.next.ServeHTTP(resp, r)
 	if err != nil {
 		return i, err
 	}
-	ct := http.DetectContentType(resp.Body.Bytes())
 
-	//fmt.Println("file len", resp.Body.Len(), "file type", ct)
-
-	var decoder func(io.Reader) (image.Image, error)
-	if strings.Contains(ct, "jpeg") {
-		decoder = jpeg.Decode
-	} else if strings.Contains(ct, ".png") {
-		decoder = png.Decode
-	} else if strings.Contains(ct, ".bmp") {
-		decoder = bmp.Decode
-		// } else if strings.HasSuffix(r.URL.String(), ".gif") { TODO need to support animated webp
-		// 	decoder = gif.Decode
-	} else {
-		return s.next.ServeHTTP(w, r)
-	}
-
-	img, err := decoder(bytes.NewReader(resp.Body.Bytes()))
-	if err != nil || img == nil {
-		log.Error(err)
-		return s.next.ServeHTTP(w, r)
-	}
-	var buf bytes.Buffer
-	err = webp.Encode(&buf, img, &webp.Options{Lossless: false, Quality: Quality})
+	newImage, err := bimg.NewImage(resp.Body.Bytes()).Convert(bimg.WEBP)
 	if err != nil {
 		log.Error(err)
 		return s.next.ServeHTTP(w, r)
 	}
+
 	w.Header().Set("Content-Type", "image/webp")
 	w.WriteHeader(http.StatusOK)
-	_, err = w.Write(buf.Bytes())
+	_, err = w.Write(newImage)
 	if err != nil {
 		log.Error(err)
 		return http.StatusInternalServerError, err
