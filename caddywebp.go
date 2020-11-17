@@ -21,9 +21,7 @@ func init() {
 func setup(c *caddy.Controller) error {
 	log.Println("setupFunc")
 	h := handler{}
-	//for c.Next() {
-	//
-	//}
+
 	httpserver.GetConfig(c).AddMiddleware(func(next httpserver.Handler) httpserver.Handler {
 		h.next = next
 		return h
