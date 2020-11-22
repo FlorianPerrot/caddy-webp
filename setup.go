@@ -1,4 +1,4 @@
-package webp
+package caddywebp
 
 import (
 	"github.com/caddyserver/caddy"

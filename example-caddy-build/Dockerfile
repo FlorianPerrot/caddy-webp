@@ -33,10 +33,8 @@ ENV LD_LIBRARY_PATH="/vips/lib:$LD_LIBRARY_PATH"
 ENV PKG_CONFIG_PATH="/vips/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:/usr/X11/lib/pkgconfig"
 ENV GO111MODULE=on
 WORKDIR ${GOPATH}/src/caddy
-COPY go.mod go.sum ./
-RUN go mod download
 COPY caddy.go caddy.go
-RUN go build -o /install/caddy
+RUN go mod init caddy && go get && go build -o /install/caddy
 
 #
 # Final stage
