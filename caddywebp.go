@@ -1,33 +1,12 @@
-package caddywebp
+package webp
 
 import (
 	"bytes"
-	"github.com/caddyserver/caddy"
 	"github.com/caddyserver/caddy/caddyhttp/httpserver"
-	log "github.com/sirupsen/logrus"
+	"github.com/h2non/bimg"
 	"net/http"
 	"strings"
-	"github.com/h2non/bimg"
 )
-
-func init() {
-	log.Println("RegisterPlugin")
-	caddy.RegisterPlugin("webp", caddy.Plugin{
-		ServerType: "http",
-		Action:     setup,
-	})
-}
-
-func setup(c *caddy.Controller) error {
-	log.Println("setupFunc")
-	h := handler{}
-
-	httpserver.GetConfig(c).AddMiddleware(func(next httpserver.Handler) httpserver.Handler {
-		h.next = next
-		return h
-	})
-	return nil
-}
 
 type handler struct {
 	next httpserver.Handler
@@ -46,17 +25,15 @@ func (s handler) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) 
 
 	newImage, err := bimg.NewImage(resp.Body.Bytes()).Convert(bimg.WEBP)
 	if err != nil {
-		log.Error(err)
 		return s.next.ServeHTTP(w, r)
 	}
 
 	w.Header().Set("Content-Type", "image/webp")
-	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(newImage)
 	if err != nil {
-		log.Error(err)
 		return http.StatusInternalServerError, err
 	}
+
 	return http.StatusOK, nil
 }
 
@@ -73,6 +50,7 @@ func (s *response) Write(data []byte) (int, error) {
 	s.Body.Write(data)
 	return len(data), nil
 }
+
 func (s *response) WriteHeader(i int) {
 	return
 }

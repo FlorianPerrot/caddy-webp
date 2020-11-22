@@ -28,8 +28,3 @@ Caddyfile
 *.iml
 out
 gen
-.gitignore
-caddywebp.go
-go.mod
-go.sum
-index.html
