@@ -14,9 +14,10 @@ type handler struct {
 
 func (s handler) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
 	accept := r.Header.Get("Accept")
-	if !(strings.Contains(accept, "image/webp") || strings.Contains(accept, "*/*")) {
+	if !strings.Contains(accept, "image/webp") {
 		return s.next.ServeHTTP(w, r)
 	}
+
 	resp := &response{}
 	i, err := s.next.ServeHTTP(resp, r)
 	if err != nil {
